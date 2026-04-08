@@ -51,3 +51,23 @@ RETURNING *;
 
 -- name: DeleteIssue :exec
 DELETE FROM issue WHERE id = $1;
+
+-- name: SearchIssues :many
+SELECT * FROM issue
+WHERE workspace_id = @workspace_id
+  AND (
+    title LIKE '%' || @query || '%'
+    OR COALESCE(description, '') LIKE '%' || @query || '%'
+  )
+ORDER BY
+  CASE WHEN title LIKE '%' || @query || '%' THEN 0 ELSE 1 END,
+  updated_at DESC
+LIMIT @search_limit OFFSET @search_offset;
+
+-- name: SearchIssuesCount :one
+SELECT COUNT(*) FROM issue
+WHERE workspace_id = @workspace_id
+  AND (
+    title LIKE '%' || @query || '%'
+    OR COALESCE(description, '') LIKE '%' || @query || '%'
+  );
